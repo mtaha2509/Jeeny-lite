@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="carCard" type="id"/>
+    <item name="carIcon" type="id"/>
+    <item name="rickshawCard" type="id"/>
+    <item name="rickshawIcon" type="id"/>
+    <item name="bikeCard" type="id"/>
+    <item name="bikeIcon" type="id"/>
+    <item name="rideTypeLayout" type="id"/>
+    <item name="driverText" type="id"/>
+</resources>

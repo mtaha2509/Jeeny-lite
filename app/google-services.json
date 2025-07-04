@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "851573623632",
+    "project_id": "database-71376",
+    "storage_bucket": "database-71376.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:851573623632:android:cb408e6990c5abbc167a55",
+        "android_client_info": {
+          "package_name": "com.example.ride_hailingapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "api-key"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:851573623632:android:16e54f2c763a83cc167a55",
+        "android_client_info": {
+          "package_name": "com.example.se_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWiq7nVE2l_0TNuLBe2k4YTLHxMYa-Wog"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
