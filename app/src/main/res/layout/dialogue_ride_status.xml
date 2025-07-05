@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:id = "@+id/bottom_sheet_ride_status"
+    android:background="@drawable/bottom_sheet_bg">
+
+    <TextView
+        android:id="@+id/ideStatusHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ride Status"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary" />
+
+    <TextView
+        android:id="@+id/pickupLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pickup: XYZ Street"
+        android:textColor="@color/text_secondary"
+        android:layout_marginTop="8dp" />
+
+    <TextView
+        android:id="@+id/dropoffLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Dropoff: ABC Avenue"
+        android:textColor="@color/text_secondary" />
+
+    <!-- Status Steps -->
+    <LinearLayout
+        android:id="@+id/statusStepLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="20dp"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/stepRequested"
+            style="@style/StatusStep"
+            android:text="Requested" />
+
+        <View style="@style/StepDivider" />
+
+        <TextView
+            android:id="@+id/stepAccepted"
+            style="@style/StatusStep"
+            android:text="Accepted" />
+
+        <View style="@style/StepDivider" />
+
+        <TextView
+            android:id="@+id/stepInProgress"
+            style="@style/StatusStep"
+            android:text="In Progress" />
+
+        <View style="@style/StepDivider" />
+
+        <TextView
+            android:id="@+id/stepCompleted"
+            style="@style/StatusStep"
+            android:text="Completed" />
+    </LinearLayout>
+
+    <!-- Action Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/statusActionButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Accept Ride"
+        android:layout_marginTop="24dp"
+        android:backgroundTint="@color/primary"
+        android:textColor="@color/white"
+        app:cornerRadius="16dp" />
+</LinearLayout>

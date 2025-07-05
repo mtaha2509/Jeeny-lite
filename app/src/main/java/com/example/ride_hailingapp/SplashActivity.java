@@ -13,6 +13,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.ride_hailingapp.driver.DriverInfoActivity;
+import com.example.ride_hailingapp.driver.DriverRidesActivity;
 import com.example.ride_hailingapp.rider.RiderDashboardActivity;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -38,7 +40,7 @@ public class SplashActivity extends AppCompatActivity {
         new Handler().postDelayed(() -> {
             if (FirebaseAuth.getInstance().getCurrentUser() != null) {
                 // User is already logged in, go to MainActivity
-                startActivity(new Intent(SplashActivity.this, RiderDashboardActivity.class));
+                startActivity(new Intent(SplashActivity.this, DriverRidesActivity.class));
             } else {
                 // Not logged in, go to role selection
                 startActivity(new Intent(SplashActivity.this, RoleSelectActivity.class));
