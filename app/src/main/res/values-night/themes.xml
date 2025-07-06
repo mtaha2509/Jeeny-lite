@@ -2,8 +2,6 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.RideHailingApp" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
     </style>
     <style name="StatusStep">
         <item name="android:layout_width">wrap_content</item>
@@ -19,5 +17,6 @@
         <item name="android:background">@color/text_hint</item>
         <item name="android:layout_marginHorizontal">4dp</item>
     </style>
+
 
 </resources>

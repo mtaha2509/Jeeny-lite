@@ -116,36 +116,37 @@ public class RideRequestAdapter extends RecyclerView.Adapter<RideRequestAdapter.
                             if (currentStep[0] == 1) {
                                 actionButton.setText("Start Ride");
 
-                                // Lock the bottom sheet so it can't be swiped down
+                                // Lock the bottom sheet
                                 if (behavior[0] != null) {
                                     behavior[0].setDraggable(false);
                                 }
                                 dialog.setCancelable(false);
+
+                                // Add driverId once ride is accepted
+                                FirebaseFirestore.getInstance()
+                                        .collection("rides")
+                                        .document(ride.getId())
+                                        .update("driverId", driverId)
+                                        .addOnFailureListener(e -> {
+                                            Toast.makeText(context, "Failed to set driver ID: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        });
                             }
                             else if (currentStep[0] == 2) {
                                 actionButton.setText("Complete Ride");
                             }
                             else {
-                                // Add riderId after ride is completed
-                                FirebaseFirestore.getInstance()
-                                        .collection("rides")
-                                        .document(ride.getId())
-                                        .update("riderId", ride.getId()) // assumes ride object contains riderId
-                                        .addOnSuccessListener(aVoid -> {
-                                            if (behavior[0] != null) {
-                                                behavior[0].setDraggable(true);
-                                            }
-                                            dialog.dismiss();
+                                // Ride Completed: dismiss with slide-down animation
+                                if (behavior[0] != null) {
+                                    behavior[0].setDraggable(true);
+                                }
 
-                                            int index = rides.indexOf(ride);
-                                            if (index != -1) {
-                                                rides.remove(index);
-                                                notifyItemRemoved(index);
-                                            }
-                                        })
-                                        .addOnFailureListener(e -> {
-                                            Toast.makeText(context, "Failed to update rider ID: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                        });
+                                dialog.dismiss();
+
+                                int index = rides.indexOf(ride);
+                                if (index != -1) {
+                                    rides.remove(index);
+                                    notifyItemRemoved(index);
+                                }
                             }
                         });
             }

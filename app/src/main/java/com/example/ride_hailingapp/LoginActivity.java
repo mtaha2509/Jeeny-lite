@@ -2,6 +2,7 @@ package com.example.ride_hailingapp;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -23,11 +24,18 @@ public class LoginActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore firestore;
+    TextView loginLink;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        loginLink = findViewById(R.id.registerlink);
+
+        loginLink.setOnClickListener( v ->{
+            Intent intent = new Intent(LoginActivity.this, RoleSelectActivity.class);
+            startActivity(intent);
+        });
 
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);

@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 
+import com.bumptech.glide.Glide;
 import com.example.ride_hailingapp.RoleSelectActivity;
 import com.example.ride_hailingapp.driver.RideRequest;
 import com.google.firebase.auth.FirebaseAuth;
@@ -49,6 +50,8 @@ public class RiderDashboardActivity extends AppCompatActivity {
     Dialog dialog;
     Button closeBtn;
     ImageView viewHistory;
+    private ListenerRegistration rideListener;
+    ImageView driverImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +104,8 @@ public class RiderDashboardActivity extends AppCompatActivity {
         driverRating = findViewById(R.id.driverRating);
         viewHistory = findViewById(R.id.viewHistory);
         logoutIcon = findViewById(R.id.logoutIcon);
+
+        driverImage = findViewById(R.id.driverImage);
 
     }
     private void showRideHistory() {
@@ -182,28 +187,108 @@ public class RiderDashboardActivity extends AppCompatActivity {
                     Toast.makeText(this, "Error requesting ride: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (rideListener != null) {
+            rideListener.remove();
+        }
+    }
 
     private void showRideStatusUI() {
-        // Hide bottom sheet
         bottomSheetLayout.setVisibility(View.GONE);
-
-        // Show ride status card
         rideStatusCard.setVisibility(View.VISIBLE);
         statusText.setText("Status: Requested");
+        driverText.setVisibility(View.VISIBLE);
         driverText.setText("Waiting for driver assignment...");
-
-        // Hide driver info until driver is assigned
         driverInfoLayout.setVisibility(View.GONE);
 
-        // Simulate driver assigned (you will replace this with Firestore listener)
-        rideStatusCard.postDelayed(() -> {
-            statusText.setText("Status: Driver Assigned");
-            driverText.setVisibility(View.GONE);
-            driverInfoLayout.setVisibility(View.VISIBLE);
+        String userId = auth.getCurrentUser().getUid();
 
-            driverName.setText("Ali Raza");
-            driverVehicle.setText("Suzuki Alto – LEX-987");
-            driverRating.setText("★ 4.9");
-        }, 3000); // Replace with real driver assignment later
+        // Remove any old listener first
+        if (rideListener != null) {
+            rideListener.remove();
+        }
+
+        // Real-time listener to active (non-completed) ride of current rider
+        rideListener = db.collection("rides")
+                .whereEqualTo("UserId", userId)
+                .addSnapshotListener((querySnapshot, error) -> {
+                    if (error != null || querySnapshot == null || querySnapshot.isEmpty()) return;
+
+                    for (DocumentSnapshot rideDoc : querySnapshot.getDocuments()) {
+                        String status = rideDoc.getString("status");
+
+                        // Only respond to incomplete rides
+                        if (!"completed".equalsIgnoreCase(status)) {
+                            statusText.setText("Status: " + capitalize(status));
+
+                            if ("accepted".equalsIgnoreCase(status)) {
+                                String driverId = rideDoc.getString("driverId");
+
+                                if (driverId != null && !driverId.isEmpty()) {
+                                    db.collection("drivers").document(driverId)
+                                            .get()
+                                            .addOnSuccessListener(driverSnap -> {
+                                                if (driverSnap.exists()) {
+                                                    String vehicleModel = driverSnap.getString("vehicleModel");
+                                                    String plateNumber = driverSnap.getString("plateNumber");
+                                                    String profileImageUrl = driverSnap.getString("profileImageUrl");
+
+
+                                                    db.collection("users").document(driverId)
+                                                            .get()
+                                                            .addOnSuccessListener(userSnap -> {
+                                                                if (userSnap.exists()) {
+                                                                    String name = userSnap.getString("name");
+
+                                                                    driverText.setVisibility(View.GONE);
+                                                                    driverInfoLayout.setVisibility(View.VISIBLE);
+                                                                    driverName.setText(name);
+                                                                    driverVehicle.setText(vehicleModel + " – " + plateNumber);
+                                                                    if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                                                                        Glide.with(this)
+                                                                                .load(profileImageUrl)
+                                                                                .placeholder(R.drawable.person) // 👈 optional fallback
+                                                                                .circleCrop() // since it's a circular background
+                                                                                .into(driverImage);
+                                                                    }
+                                                                }
+                                                            });
+                                                }
+                                            });
+                                }
+
+                            } else if ("in Progress".equalsIgnoreCase(status)) {
+                                statusText.setText("Status: In Progress");
+
+                            }
+
+                            // show status card if not already visible
+                            rideStatusCard.setVisibility(View.VISIBLE);
+                            bottomSheetLayout.setVisibility(View.GONE);
+
+                            return; // only process one active ride
+                        }
+                    }
+
+                    // If no active ride found (i.e., all rides are completed)
+                    rideStatusCard.setVisibility(View.GONE);
+                    bottomSheetLayout.setVisibility(View.VISIBLE);
+                    pickupInput.setText("");
+                    dropoffInput.setText("");
+                    selectedRideType = null;
+                    carCard.setCardBackgroundColor(getColor(R.color.white));
+                    bikeCard.setCardBackgroundColor(getColor(R.color.white));
+                    rickshawCard.setCardBackgroundColor(getColor(R.color.white));
+                });
+
     }
+
+    private String capitalize(String input) {
+        if (input == null || input.isEmpty()) return "";
+        return input.substring(0, 1).toUpperCase() + input.substring(1);
+    }
+
+
 }

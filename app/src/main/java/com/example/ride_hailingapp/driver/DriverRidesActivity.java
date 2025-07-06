@@ -1,18 +1,25 @@
 package com.example.ride_hailingapp.driver;
 
+import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.ride_hailingapp.R;
 import com.example.ride_hailingapp.RoleSelectActivity;
+import com.example.ride_hailingapp.rider.RideHistoryAdapter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.*;
 import java.util.ArrayList;
 import java.util.List;
+import android.view.View;
 
 public class DriverRidesActivity extends AppCompatActivity {
 
@@ -25,6 +32,8 @@ public class DriverRidesActivity extends AppCompatActivity {
     String driverVehicleType;
     String driverId;
     ImageView logoutIcon;
+    private ListenerRegistration rideListener;
+    TextView noRidesText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +41,9 @@ public class DriverRidesActivity extends AppCompatActivity {
         setContentView(R.layout.activity_driver_rides);
 
         ImageView logoutIcon = findViewById(R.id.logoutIcon);
+        ImageView viewHistory = findViewById(R.id.viewHistory);
+        viewHistory.setOnClickListener(v -> showDriverHistory());
+
 
         logoutIcon.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
@@ -57,6 +69,37 @@ public class DriverRidesActivity extends AppCompatActivity {
 
         fetchDriverVehicleType();
     }
+    @SuppressLint("NotifyDataSetChanged")
+    private void showDriverHistory() {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialogue_ride_history_modal);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.setCancelable(true);
+
+        RecyclerView historyRecycler = dialog.findViewById(R.id.historyRecycler);
+        historyRecycler.setLayoutManager(new LinearLayoutManager(this));
+
+        List<RideRequest> historyList = new ArrayList<>();
+        RideHistoryAdapter adapter = new RideHistoryAdapter(this, historyList);
+        historyRecycler.setAdapter(adapter);
+
+        db.collection("rides")
+                .whereEqualTo("driverId", driverId)  // driverId from FirebaseAuth
+                .whereEqualTo("status", "completed") // only completed rides
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        RideRequest ride = doc.toObject(RideRequest.class);
+                        historyList.add(ride);
+                    }
+                    adapter.notifyDataSetChanged();
+                });
+
+        dialog.show();
+    }
+
 
     private void fetchDriverVehicleType() {
         db.collection("drivers")
@@ -76,25 +119,48 @@ public class DriverRidesActivity extends AppCompatActivity {
     }
 
     private void fetchMatchingRides() {
-        db.collection("rides")
+        noRidesText = findViewById(R.id.noRidesText);
+        if (rideListener != null) {
+            rideListener.remove(); // Prevent multiple listeners
+        }
+
+        rideListener = db.collection("rides")
                 .whereEqualTo("rideType", driverVehicleType)
                 .whereEqualTo("status", "requested")
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addSnapshotListener((querySnapshot, error) -> {
+                    if (error != null || querySnapshot == null) {
+                        Toast.makeText(this, "Error listening for ride requests.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
                     rideList.clear();
+
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        // Filter out rides already rejected by this driver
                         List<String> rejectedBy = (List<String>) doc.get("rejectedBy");
+
                         if (rejectedBy == null || !rejectedBy.contains(driverId)) {
                             RideRequest ride = doc.toObject(RideRequest.class);
-                            ride.setId(doc.getId());
-                            rideList.add(ride);
+                            if (ride != null) {
+                                ride.setId(doc.getId());
+                                rideList.add(ride);
+                            }
                         }
                     }
+
                     adapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Error fetching rides.", Toast.LENGTH_SHORT).show()
-                );
+                    if (rideList.isEmpty()) {
+                        noRidesText.setVisibility(View.VISIBLE);
+                    } else {
+                        noRidesText.setVisibility(View.GONE);
+                    }
+                });
     }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (rideListener != null) {
+            rideListener.remove();
+        }
+    }
+
 }
