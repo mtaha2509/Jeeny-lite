@@ -63,10 +63,18 @@ public class RideRequestAdapter extends RecyclerView.Adapter<RideRequestAdapter.
                 .update("rejectedBy", FieldValue.arrayUnion(driverId),
                         "status", "rejected")
                 .addOnSuccessListener(unused -> {
-                    rides.remove(position);
-                    notifyItemRemoved(position);
+                    // Get the latest index of this ride in the list
+                    int index = rides.indexOf(ride);
+                    if (index != -1) {
+                        rides.remove(index);
+                        notifyItemRemoved(index);
+                    } else {
+                        // As fallback, do full refresh
+                        notifyDataSetChanged();
+                    }
                 });
     }
+
 
     private void showSimulationBottomSheet(RideRequest ride) {
         View view = LayoutInflater.from(context).inflate(R.layout.dialogue_ride_status, null);

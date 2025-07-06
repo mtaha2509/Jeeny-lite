@@ -220,7 +220,7 @@ public class RiderDashboardActivity extends AppCompatActivity {
                         String status = rideDoc.getString("status");
 
                         // Only respond to incomplete rides
-                        if (!"completed".equalsIgnoreCase(status)) {
+                        if (!"completed".equalsIgnoreCase(status) && !"rejected".equalsIgnoreCase(status)) {
                             statusText.setText("Status: " + capitalize(status));
 
                             if ("accepted".equalsIgnoreCase(status)) {
