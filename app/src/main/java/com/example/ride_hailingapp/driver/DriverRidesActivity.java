@@ -1,11 +1,14 @@
 package com.example.ride_hailingapp.driver;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.ride_hailingapp.R;
+import com.example.ride_hailingapp.RoleSelectActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.*;
 import java.util.ArrayList;
@@ -21,11 +24,25 @@ public class DriverRidesActivity extends AppCompatActivity {
     FirebaseAuth auth;
     String driverVehicleType;
     String driverId;
+    ImageView logoutIcon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_rides);
+
+        ImageView logoutIcon = findViewById(R.id.logoutIcon);
+
+        logoutIcon.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+
+            Toast.makeText(this, "Logged out", Toast.LENGTH_SHORT).show();
+
+            Intent intent = new Intent(DriverRidesActivity.this, RoleSelectActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // Clear backstack
+            startActivity(intent);
+        });
+
 
         // Initialize Firebase
         db = FirebaseFirestore.getInstance();

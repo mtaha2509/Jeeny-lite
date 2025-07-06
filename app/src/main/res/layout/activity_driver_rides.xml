@@ -4,16 +4,46 @@
     android:orientation="vertical"
     android:padding="16dp"
     android:background="@color/white">
-
-    <TextView
-        android:id="@+id/headingText"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Available Rides"
-        android:textSize="22sp"
-        android:textColor="@color/text_primary"
-        android:textStyle="bold"
-        android:layout_marginBottom="12dp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="28dp"
+        android:weightSum="1">
+
+        <TextView
+            android:id="@+id/headingText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.8"
+            android:text="Available Rides"
+            android:textSize="26sp"
+            android:textColor="#2D3748"
+            android:fontFamily="sans-serif-medium" />
+
+        <ImageView
+            android:id="@+id/viewHistory"
+            android:layout_width="28dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="end"
+            android:layout_weight="0.2"
+            android:clickable="true"
+            android:contentDescription="History"
+            android:focusable="true"
+            android:src="@drawable/ic_history" />
+
+        <ImageView
+            android:id="@+id/logoutIcon"
+            android:layout_width="28dp"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_logout"
+            android:contentDescription="Logout"
+            android:layout_gravity="end"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rideRequestsRecycler"

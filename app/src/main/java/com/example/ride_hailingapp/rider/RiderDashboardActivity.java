@@ -2,10 +2,18 @@ package com.example.ride_hailingapp.rider;
 
 import static com.example.ride_hailingapp.R.id.driverText;
 
+import android.app.Dialog;
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.*;
 
+import com.example.ride_hailingapp.RoleSelectActivity;
+import com.example.ride_hailingapp.driver.RideRequest;
+import com.google.firebase.auth.FirebaseAuth;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
@@ -15,6 +23,16 @@ import com.google.firebase.firestore.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import android.view.LayoutInflater;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class RiderDashboardActivity extends AppCompatActivity {
 
@@ -22,19 +40,46 @@ public class RiderDashboardActivity extends AppCompatActivity {
     CardView carCard, bikeCard, rickshawCard;
     MaterialButton confirmRideBtn;
     String selectedRideType = null;
-
     FirebaseFirestore db;
-
-    // UI references for status
     CardView rideStatusCard;
     LinearLayout bottomSheetLayout, driverInfoLayout;
     TextView statusText, driverText, driverName, driverVehicle, driverRating;
+    FirebaseAuth auth;
+    ImageView logoutIcon;
+    Dialog dialog;
+    Button closeBtn;
+    ImageView viewHistory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_rider_dashboard);
 
+        init();
+
+
+        viewHistory.setOnClickListener(v -> showRideHistory());
+
+
+        logoutIcon.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+
+            Toast.makeText(this, "Logged out", Toast.LENGTH_SHORT).show();
+
+            Intent intent = new Intent(RiderDashboardActivity.this, RoleSelectActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // Clear backstack
+            startActivity(intent);
+        });
+
+
+        setRideTypeListeners();
+
+        confirmRideBtn.setOnClickListener(view -> {
+            requestRide();
+        });
+    }
+    private void init(){
+        auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
         // View bindings
@@ -54,13 +99,47 @@ public class RiderDashboardActivity extends AppCompatActivity {
         driverName = findViewById(R.id.driverName);
         driverVehicle = findViewById(R.id.driverVehicle);
         driverRating = findViewById(R.id.driverRating);
+        viewHistory = findViewById(R.id.viewHistory);
+        logoutIcon = findViewById(R.id.logoutIcon);
 
-        setRideTypeListeners();
-
-        confirmRideBtn.setOnClickListener(view -> {
-            requestRide();
-        });
     }
+    private void showRideHistory() {
+        dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialogue_ride_history_modal);
+
+        // Make background transparent and modal styled
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.setCancelable(true);
+
+        closeBtn = dialog.findViewById(R.id.closeButton);
+        closeBtn.setOnClickListener(v -> dialog.dismiss());
+
+        RecyclerView historyRecycler = dialog.findViewById(R.id.historyRecycler);
+        historyRecycler.setLayoutManager(new LinearLayoutManager(this));
+
+        List<RideRequest> historyList = new ArrayList<>();
+        RideHistoryAdapter adapter = new RideHistoryAdapter(this, historyList);
+        historyRecycler.setAdapter(adapter);
+
+        // Fetch completed rides
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        db.collection("rides")
+                .whereEqualTo("UserId", userId)
+                .whereEqualTo("status", "completed")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (DocumentSnapshot doc : querySnapshot) {
+                        RideRequest ride = doc.toObject(RideRequest.class);
+                        historyList.add(ride);
+                    }
+                    adapter.notifyDataSetChanged();
+                });
+
+        dialog.show();
+    }
+
 
     private void setRideTypeListeners() {
         carCard.setOnClickListener(v -> selectRide("Car"));
@@ -91,6 +170,7 @@ public class RiderDashboardActivity extends AppCompatActivity {
         rideData.put("rideType", selectedRideType);
         rideData.put("status", "requested");
         rideData.put("timestamp", FieldValue.serverTimestamp());
+        rideData.put("UserId",auth.getCurrentUser().getUid());
 
         db.collection("rides")
                 .add(rideData)

@@ -48,5 +48,5 @@
         <item>Car</item>
         <item>Rickshaw</item>
     </string-array>
-
+    <string name="underlined_login_text"><u>Already have an account? Log in</u></string>
 </resources>

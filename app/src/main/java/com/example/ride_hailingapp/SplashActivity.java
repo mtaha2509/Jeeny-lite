@@ -17,6 +17,7 @@ import com.example.ride_hailingapp.driver.DriverInfoActivity;
 import com.example.ride_hailingapp.driver.DriverRidesActivity;
 import com.example.ride_hailingapp.rider.RiderDashboardActivity;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class SplashActivity extends AppCompatActivity {
     private static final int SPLASH_TIME_OUT = 3000;
@@ -38,14 +39,43 @@ public class SplashActivity extends AppCompatActivity {
         logo.startAnimation(anim);
 
         new Handler().postDelayed(() -> {
-            if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-                // User is already logged in, go to MainActivity
-                startActivity(new Intent(SplashActivity.this, DriverRidesActivity.class));
+            FirebaseAuth auth = FirebaseAuth.getInstance();
+
+            if (auth.getCurrentUser() != null) {
+                String uid = auth.getCurrentUser().getUid();
+                FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(uid)
+                        .get()
+                        .addOnSuccessListener(documentSnapshot -> {
+                            if (documentSnapshot.exists()) {
+                                String role = documentSnapshot.getString("role");
+
+                                if ("rider".equalsIgnoreCase(role)) {
+                                    startActivity(new Intent(SplashActivity.this, RiderDashboardActivity.class));
+                                } else if ("driver".equalsIgnoreCase(role)) {
+                                    startActivity(new Intent(SplashActivity.this, DriverRidesActivity.class));
+                                } else {
+                                    // Unknown role, fallback to role selection
+                                    startActivity(new Intent(SplashActivity.this, RoleSelectActivity.class));
+                                }
+                            } else {
+                                // User exists but role document doesn't exist
+                                startActivity(new Intent(SplashActivity.this, RoleSelectActivity.class));
+                            }
+                            finish();
+                        })
+                        .addOnFailureListener(e -> {
+                            // Firestore error, fallback
+                            startActivity(new Intent(SplashActivity.this, RoleSelectActivity.class));
+                            finish();
+                        });
             } else {
-                // Not logged in, go to role selection
+                // Not logged in
                 startActivity(new Intent(SplashActivity.this, RoleSelectActivity.class));
+                finish();
             }
-            finish();
         }, SPLASH_TIME_OUT);
+
     }
 }

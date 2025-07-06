@@ -5,12 +5,16 @@ import android.os.Bundle;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.ride_hailingapp.driver.DriverInfoActivity;
+import com.example.ride_hailingapp.driver.DriverRidesActivity;
 import com.example.ride_hailingapp.rider.RiderDashboardActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.Objects;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -69,9 +73,30 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void redirectToMain(String role) {
-        Intent intent = new Intent(LoginActivity.this, RiderDashboardActivity.class);
-        intent.putExtra("role", role);
-        startActivity(intent);
-        finish();
+        String uid = mAuth.getCurrentUser().getUid();
+
+        if (Objects.equals(role, "rider")) {
+            startActivity(new Intent(LoginActivity.this, RiderDashboardActivity.class));
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+            finish();
+        } else {
+            firestore.collection("drivers").document(uid)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            startActivity(new Intent(LoginActivity.this, DriverRidesActivity.class));
+                        } else {
+                            startActivity(new Intent(LoginActivity.this, DriverInfoActivity.class));
+                        }
+                        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Error checking driver profile: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        // Optional fallback
+                        startActivity(new Intent(LoginActivity.this, DriverInfoActivity.class));
+                        finish();
+                    });
+        }
     }
 }

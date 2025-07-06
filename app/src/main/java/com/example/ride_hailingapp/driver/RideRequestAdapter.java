@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -84,7 +85,7 @@ public class RideRequestAdapter extends RecyclerView.Adapter<RideRequestAdapter.
         pickup.setText("Pickup: " + ride.getPickup());
         dropoff.setText("Dropoff: " + ride.getDropoff());
 
-        String[] statusSteps = {"Accepted", "In Progress", "Completed"};
+        String[] statusSteps = {"accepted", "in Progress", "completed"};
         TextView[] stepViews = {stepAccepted, stepInProgress, stepCompleted};
         final int[] currentStep = {0};
 
@@ -120,22 +121,31 @@ public class RideRequestAdapter extends RecyclerView.Adapter<RideRequestAdapter.
                                     behavior[0].setDraggable(false);
                                 }
                                 dialog.setCancelable(false);
-                            } else if (currentStep[0] == 2) {
+                            }
+                            else if (currentStep[0] == 2) {
                                 actionButton.setText("Complete Ride");
-                            } else {
-                                // Ride Completed: dismiss with slide-down animation
-                                if (behavior[0] != null) {
-                                    behavior[0].setDraggable(true); // Re-enable dragging before dismiss
-                                }
+                            }
+                            else {
+                                // Add riderId after ride is completed
+                                FirebaseFirestore.getInstance()
+                                        .collection("rides")
+                                        .document(ride.getId())
+                                        .update("riderId", ride.getId()) // assumes ride object contains riderId
+                                        .addOnSuccessListener(aVoid -> {
+                                            if (behavior[0] != null) {
+                                                behavior[0].setDraggable(true);
+                                            }
+                                            dialog.dismiss();
 
-                                dialog.dismiss();
-
-                                // Remove ride from RecyclerView
-                                int index = rides.indexOf(ride);
-                                if (index != -1) {
-                                    rides.remove(index);
-                                    notifyItemRemoved(index);
-                                }
+                                            int index = rides.indexOf(ride);
+                                            if (index != -1) {
+                                                rides.remove(index);
+                                                notifyItemRemoved(index);
+                                            }
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Toast.makeText(context, "Failed to update rider ID: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        });
                             }
                         });
             }
